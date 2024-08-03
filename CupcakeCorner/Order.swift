@@ -8,6 +8,13 @@
 import Foundation
 import Observation
 
+struct UserAddress: Codable {
+    var name = ""
+    var streetAddress = ""
+    var city = ""
+    var zip = ""
+}
+
 @Observable
 class Order: Codable {
     enum CodingKeys: String, CodingKey {
@@ -16,10 +23,11 @@ class Order: Codable {
         case _specialRequestEnabled = "specialRequestEnabled"
         case _extraFrosting = "extraFrosting"
         case _addSprinkles = "addSprinkles"
-        case _name = "name"
+        /*case _name = "name"
         case _city = "city"
         case _streetAddress = "streetAddress"
-        case _zip = "zip"
+        case _zip = "zip"*/
+        case _userAddress = "userAddress"
     }
     
     static let types = ["Vanilla", "Strawberry", "Chocolate", "Rainbow"]
@@ -38,13 +46,47 @@ class Order: Codable {
     var extraFrosting = false
     var addSprinkles = false
     
-    var name = ""
+    /*var name = ""
     var streetAddress = ""
     var city = ""
-    var zip = ""
+    var zip = ""*/
+    var userAddress: UserAddress
+    /*var name: String {
+        get {
+            userAddress.name
+        }
+        set {
+            userAddress.name = newValue
+        }
+    }
+    var streetAddress: String {
+        get {
+            userAddress.streetAddress
+        }
+        set {
+            userAddress.streetAddress = newValue
+        }
+    }
+    var city: String {
+        get {
+            userAddress.city
+        }
+        set {
+            userAddress.city = newValue
+        }
+    }
+    var zip: String {
+        get {
+            userAddress.zip
+        }
+        set {
+            userAddress.zip = newValue
+        }
+    }*/
     
     var hasValidAddress: Bool {
-        if name.isEmpty || streetAddress.isEmpty || city.isEmpty || zip.isEmpty {
+        //if name.isEmpty || streetAddress.isEmpty || city.isEmpty || zip.isEmpty {
+        if userAddress.name.isReallyEmpty || userAddress.streetAddress.isReallyEmpty || userAddress.city.isReallyEmpty || userAddress.zip.isReallyEmpty {
             return false
         }
         
@@ -69,5 +111,30 @@ class Order: Codable {
         }
         
         return cost
+    }
+    
+    init() {
+        // Read from UserDefaults to see if we have previously saved an address. If not, then return an empty struct
+        if let address = UserDefaults.standard.data(forKey: "UserAddress") {
+            if let decodedItems = try? JSONDecoder().decode(UserAddress.self, from: address) {
+                userAddress = decodedItems
+                return
+            }
+        }
+        userAddress = UserAddress()
+    }
+    
+    func saveAddress() {
+        // Save data to user defaults
+        if let encoded = try? JSONEncoder().encode(userAddress) {
+            UserDefaults.standard.set(encoded, forKey: "UserAddress")
+        }
+    }
+}
+
+// We're checking if a string, ecluding spaces and newlines, is empty
+extension String {
+    var isReallyEmpty: Bool {
+        self.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }
